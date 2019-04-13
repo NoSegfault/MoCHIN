@@ -25,9 +25,11 @@ task: DBLP_AREA, DBLP_GROUP, YAGO_GROUP, $SELF_DEFINED
 flag: save_model	run our model and save parameers to saved_model.pklz
       eval:	evaluation the saved_model.pklz
 
+e.g. 
+	$ python3 MoCHIN.py 1_10_0.001 0.25_0.25_0.25_0.25 0.01 DBLP_GROUP save_model
+
 Please provide a config.py if running self-defined task.
 
-e.g. python3 MoCHIN.py 1_10_0.001 0.25_0.25_0.25_0.25 0.01 DBLP_GROUP save_model
 
 ### Miscellaneous
 
