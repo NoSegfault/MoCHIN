@@ -1,0 +1,12 @@
+Xin_Jin	1
+Christos_Faloutsos	2
+Fan_Guo	2
+David_O._Okonkwo	5
+Hualiang_Zhuang	5
+Xiaofang_Zhou	5
+David_M._Blei	4
+Chengkai_Li	5
+Ming_Ji	1
+Betty_Xia	1
+Pascual_Martínez-Gómez	5
+Ming-Wei_Chang	3
