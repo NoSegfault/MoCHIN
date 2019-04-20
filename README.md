@@ -37,5 +37,5 @@ Please provide a config.py if running self-defined task.
 
 ### Miscellaneous
 
-Please send any questions you might have about the codes and/or the algorithm to <yushi2@illinois.edu>.
+Please send any questions you might have about the codes and/or the algorithm to <xhe17@illinois.edu>, <nzhang31@illinois.edu>, <yushi2@illinois.edu>.
 
