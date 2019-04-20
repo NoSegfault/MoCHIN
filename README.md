@@ -11,7 +11,7 @@ Particularly, it includes
 (3) the class labels used in the DBLP and YAGO clustering tasks.
 
 ## Basic Usage
-	$ python3 MoCHIN.py $lambda1_$lambda2_$lambda3 $m1_$m2_..._$mk $seed-ratio $task $flag
+	$ python3 MoCHIN.py $lambda1_$lambda2_$lambda3 $m1_$m2_..._$mk $task $flag
 
 #### Input
 

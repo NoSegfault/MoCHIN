@@ -18,7 +18,6 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("hyper")
 parser.add_argument("w_hyper")
-parser.add_argument("sr", type=float)
 parser.add_argument("task")
 parser.add_argument("flag")
 args = parser.parse_args()
@@ -68,60 +67,6 @@ def number_remove(m):
 
 ###########################################
 #Xinwei edited
-def list_store_author(list_name, V, single_author_list, seed_label, motifs):
-	motifs_str = '_'.join(motifs)
-	with open('sample_data_venue13/' + 'seed_' + args.sr + '_' + data_source_name + motifs_str + '_{}_{}_{}_'.format(lambda1, lambda2, lambda3) + args.w_hyper + list_name, 'w') as fout:
-
-		for i in range(len(V)):
-			fout.write('{}\t'.format(single_author_list[i]))
-			if single_author_list[i] in seed_label:
-				fout.write('seed\t')
-			else:
-				fout.write('test\t')
-			for j in range(len(V[0])):
-				fout.write('{}  '.format(V[i][j]))
-
-			fout.write('\n')
-
-
-def list_store_paper(list_name, V, paper_list, motifs):
-	motifs_str = '_'.join(motifs)
-
-	with open('sample_data_venue13/' + 'seed_' + args.sr + '_' + data_source_name + motifs_str + '_{}_{}_{}_'.format(lambda1, lambda2, lambda3) + args.w_hyper + list_name, 'w') as fout:
-
-		for i in range(len(V)):
-			fout.write('{}\t'.format(paper_list[i]))
-			for j in range(len(V[0])):
-				fout.write('{}  '.format(V[i][j]))
-
-			fout.write('\n')
-
-def list_store_venue(list_name, V, venue_list, motifs):
-	motifs_str = '_'.join(motifs)
-
-	with open('sample_data_venue13/' + 'seed_' + args.sr + '_' + data_source_name + motifs_str + '_{}_{}_{}_'.format(lambda1, lambda2, lambda3) + args.w_hyper + list_name, 'w') as fout:
-
-		for i in range(len(V)):
-			fout.write('{}\t'.format(venue_list[i]))
-			for j in range(len(V[0])):
-				fout.write('{}  '.format(V[i][j]))
-
-			fout.write('\n')	
-
-
-
-def list_store_term(list_name, V, term_list, motifs):
-	motifs_str = '_'.join(motifs)
-
-	with open('sample_data_venue13/' + 'seed_' + args.sr + '_' + data_source_name + motifs_str + '_{}_{}_{}_'.format(lambda1, lambda2, lambda3) + args.w_hyper + list_name, 'w') as fout:
-
-		for i in range(len(V)):
-			fout.write('{}\t'.format(term_list[i]))
-			for j in range(len(V[0])):
-				fout.write('{}  '.format(V[i][j]))
-
-			fout.write('\n')	
-
 
 def motif_load(m, motif_idx):
 
@@ -848,10 +793,6 @@ if __name__ == "__main__":
 		target_type_list = all_person_l
 
 
-	#Xinwei edited
-	##hardcoded donwbelow
-	seed_all_ratio = args.sr
-
 	label_cnt = {}
 	for a in target_type_list:
 		label = labels_dict[a]
@@ -866,41 +807,8 @@ if __name__ == "__main__":
 	labels_dict_test = {}
 
 	#write a seed loader here
-	if args.task == 'DBLP_GROUP':
-		'''
-		with open('seed_group.txt', 'r') as f:
-			seed_group = f.readlines()[0][:-1].split(',')
-			print(seed_group)
-
-		#Xinwei edited
-		for l in label_cnt:
-			for a in single_author_list:
-				if labels_dict[a] == l:
-					#Xinwei edited
-					if(a.lower() in seed_group):
-						seed_label[a] = labels_dict[a]
-					else:
-						labels_dict_test[a] = labels_dict[a]
-		'''
-		_,seed_label,labels_dict_test = label_author_new(labelfile_train, labelfile_test)
-	elif args.task == 'DBLP_AREA':
-		_,seed_label,labels_dict_test = label_author_new(labelfile_train, labelfile_test)
-	elif args.task == 'YAGO':
-		_,seed_label,labels_dict_test = label_author_new(labelfile_train, labelfile_test)
-		'''
-		flag_dict = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1}
-		for l in label_cnt:
-			for a in all_person_l:
-				if labels_dict[a] == l:
-					if((labels_dict[a] in list(flag_dict)) and (flag_dict[labels_dict[a]])):
-						flag_dict[labels_dict[a]] = 0
-						seed_label[a] = labels_dict[a]
-					if seed_all_ratio >= random.random():
-						seed_label[a] = labels_dict[a]
-					else:
-						labels_dict_test[a] = labels_dict[a]
-
-	'''
+	_, seed_label, labels_dict_test = label_author_new(labelfile_train, labelfile_test)
+		
 	seed_label_cnt = {}
 	for a in seed_label:
 		l = seed_label[a]
@@ -928,8 +836,6 @@ if __name__ == "__main__":
 
 
 	if(args.flag != 'eval'):
-
-
 
 		M = get_M(target_type_list, seed_label)
 		print("finish getting mask using seed labels")
