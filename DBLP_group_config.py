@@ -1,9 +1,9 @@
 class Config:
 	motifs = ['AP', 'PV', 'PT', 'PP']
+	motif_weights = [.25] * 4
+	lambdas = [1, 10, .001]
 	seed_file = 'original_group_final/label-5-group.txt'
 	N_clusters = 5
-	nprocesses_for_L1 = 1
-	nprocesses_for_U1 = 1
 	list_prefix = 'intermediate_group_final/'
 	single_author_list = 'original_group_final/single-author-list.txt'
 	paper_list = list_prefix + 'paper-list-10.txt'
@@ -12,3 +12,10 @@ class Config:
 	numbers = list_prefix + 'numbers-12.txt'
 	labelfile_train = 'train_test_split_group/dblp-group-train-label.txt'
 	labelfile_test = 'train_test_split_group/dblp-group-test-label.txt'
+
+	# System Settings:
+	# enable loss evaluation not at every inner-loop step (every k steps, where k is a variable)
+	loss_eval_step_size = 1
+	
+	nprocesses_for_L1 = 1
+	nprocesses_for_U1 = 1

@@ -11,7 +11,7 @@ Particularly, it includes
 (3) the class labels used in the DBLP and YAGO clustering tasks.
 
 ## Basic Usage
-	$ python3 MoCHIN.py $lambda1_$lambda2_$lambda3 $m1_$m2_..._$mk $seed-ratio $task $flag
+	$ python3 MoCHIN.py $task $flag
 
 #### Input
 
@@ -30,12 +30,12 @@ flag: save_model	run our model and save parameers to saved_model.pklz
 
 e.g.
 
-	$ python3 MoCHIN.py 1_10_0.001 0.25_0.25_0.25_0.25 0.01 DBLP_GROUP save_model
+	$ python3 MoCHIN.py DBLP_GROUP save_model
 
 Please provide a config.py if running self-defined task.
 
 
 ### Miscellaneous
 
-Please send any questions you might have about the codes and/or the algorithm to <yushi2@illinois.edu>.
+Please send any questions you might have about the codes and/or the algorithm to <xhe17@illinois.edu>, <nzhang31@illinois.edu>, <yushi2@illinois.edu>.
 
