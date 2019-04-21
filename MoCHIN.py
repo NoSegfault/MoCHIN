@@ -3,7 +3,6 @@ import GradDescent as gd
 import pickle
 import time
 import itertools
-import sys, threading, os  # python 3
 from joblib import Parallel, delayed
 import random
 from sklearn.metrics import precision_score
@@ -16,8 +15,6 @@ from collections import OrderedDict
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("hyper")
-parser.add_argument("w_hyper")
 parser.add_argument("task")
 parser.add_argument("flag")
 args = parser.parse_args()
@@ -36,22 +33,22 @@ elif args.task == 'YAGO':
 
 seed_file = Config.seed_file
 N_clusters = Config.N_clusters
-nprocesses_for_U1 = Config.nprocesses_for_U1
-nprocesses_for_L1 = Config.nprocesses_for_L1
 labelfile_train = Config.labelfile_train
 labelfile_test = Config.labelfile_test
-
-# enable loss evaluation not at every inner-loop step (every k steps, where k is a variable)
-loss_eval_step_size = 1
-
-[lambda1, lambda2, lambda3] = [float(x) for x in args.hyper.split('_')]
-
+[lambda1, lambda2, lambda3] = Config.lambdas
 motifs = Config.motifs
+motif_weights = Config.motif_weights
+assert(len(motifs) == len(motif_weights))
+
+loss_eval_step_size = Config.loss_eval_step_size
+nprocesses_for_U1 = Config.nprocesses_for_U1
+nprocesses_for_L1 = Config.nprocesses_for_L1
 
 if DEBUG:
 	print('[lambda1, lambda2, lambda3] is: {}'.format([lambda1, lambda2, lambda3]))
-	print('args.w_hyper: {}'.format(args.w_hyper))
 	print("Motifs: {}".format(motifs))
+	print('Motif Init Weights: {}'.format(motif_weights))
+
 
 N_motif_type = len(motifs)
 
@@ -250,7 +247,7 @@ def init_V_YAGO(seed_label, single_author_list, seed_label_cnt, labels_dict_test
 def init_miu():
 	# miu = np.random.dirichlet(np.ones(N_motif_type),size=1)
 	# miu = np.ones(N_motif_type) / N_motif_type
-	miu = np.array([float(x) for x in args.w_hyper.split('_')])
+	miu = np.array(motif_weights)
 	return miu
 ############################################
 
