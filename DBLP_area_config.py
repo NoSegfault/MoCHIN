@@ -1,7 +1,12 @@
 class Config:
 	motifs = ['AP', 'PV']
-	motif_weights = [.5, .5]
+
+	# motif_weights can be None
+	motif_weights = [.3, .7]
+
+	# lambdas can be None
 	lambdas = [1, 10, .001]
+
 	original_prefix = 'original_area_final/'
 	seed_file = original_prefix + 'label-14-area.txt'
 	N_clusters = 14

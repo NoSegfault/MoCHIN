@@ -30,15 +30,30 @@ elif args.task == 'DBLP_AREA':
 elif args.task == 'YAGO':
 	from YAGO_config import *
 	random.seed(15)
+else:
+	from config import *
 
 seed_file = Config.seed_file
 N_clusters = Config.N_clusters
 labelfile_train = Config.labelfile_train
 labelfile_test = Config.labelfile_test
-[lambda1, lambda2, lambda3] = Config.lambdas
+
+if Config.lambdas:
+	# load lambdas if specified
+	[lambda1, lambda2, lambda3] = Config.lambdas
+else:
+	# use default lambdas
+	[lambda1, lambda2, lambda3] = [1, 10, .001]
+
 motifs = Config.motifs
-motif_weights = Config.motif_weights
-assert(len(motifs) == len(motif_weights))
+
+if Config.motif_weights:
+	# load motif initial wights if specified
+	motif_weights = Config.motif_weights
+	assert(len(motifs) == len(motif_weights))
+else:
+	# use default motif initial weights
+	motif_weights = [1./len(motifs)] * len(motifs)
 
 loss_eval_step_size = Config.loss_eval_step_size
 nprocesses_for_U1 = Config.nprocesses_for_U1
@@ -49,6 +64,7 @@ if DEBUG:
 	print("Motifs: {}".format(motifs))
 	print('Motif Init Weights: {}'.format(motif_weights))
 
+exit(0)
 
 N_motif_type = len(motifs)
 
@@ -770,18 +786,8 @@ if __name__ == "__main__":
 		for i in range(len(countries)):
 			addr_transform[countries[i]] = i+1
 
-		'''
-		with open(seed_file, "r") as fin:
-			labels_dict = {}
-			for line in fin:
-				kv = line.split(' ')
-				labels_dict[kv[0]] = addr_transform[kv[1]]
-		'''
 		labels_dict,_,_ = label_author_new(labelfile_train,labelfile_test)
-		#print(len(labels_dict))
-		#print(len(labels_dict1))
-		#exit(0)
-		# Naijing edited
+		
 		all_person_l = person_l
 		person_idx_dict = {}
 		for i in range(N_persons):
