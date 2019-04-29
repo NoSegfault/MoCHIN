@@ -1,15 +1,21 @@
 class Config:
 	motifs = ['AP', 'PV', 'PT', 'PP']
+
 	motif_weights = [.25] * 4
+
 	lambdas = [1, 10, .001]
-	seed_file = 'original_group_final/label-5-group.txt'
+
 	N_clusters = 5
+
+	original_prefix = 'original_group_final/'
+	seed_file = original_prefix + 'label-5-group.txt'
 	list_prefix = 'intermediate_group_final/'
-	single_author_list = 'original_group_final/single-author-list.txt'
-	paper_list = list_prefix + 'paper-list-10.txt'
-	venue_list = list_prefix + 'venue-list-10.txt'
-	term_list = list_prefix + 'term-list-10.txt'
-	numbers = list_prefix + 'numbers-12.txt'
+
+# 	node_type_number = {'P': N_papers, 'A': N_authors, 'V': N_venues, 'T': N_terms}
+	node_type_number = {'P': 11138, 'A': 245, 'V': 1564, 'T': 6550}
+	target = 'A'
+	target_list = original_prefix + 'single-author-list.txt'
+
 	labelfile_train = 'train_test_split_group/dblp-group-train-label.txt'
 	labelfile_test = 'train_test_split_group/dblp-group-test-label.txt'
 

@@ -11,7 +11,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics import log_loss
 import gzip
-from collections import OrderedDict
+from collections import defaultdict
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -129,21 +129,7 @@ def label_author_new(labelfile_train, labelfile_test):
 ###########################################
 node_type_number = Config.node_type_number
 target = Config.target
-
-# with open(Config.numbers, 'rb') as nf:
-# 	numbers = pickle.load(nf)
-# 	print(numbers)
-# 	exit(0)
-# if args.task[:4] == 'DBLP':
-# 	[N_papers, N_authors, N_venues, N_terms] = numbers
-# 	node_type_number = {'P': N_papers, 'A': N_authors, 'V': N_venues, 'T': N_terms}
-
-if args.task == 'YAGO':
-	[N_persons, N_works, N_orgs, N_prizes, N_positions, N_locs] = numbers
-	node_type_number = {'P': N_persons, 'W': N_works, 'O': N_orgs, 'R': N_prizes, 'S': N_positions, 'L': N_locs}
-
-
-#########################################
+###########################################
 
 # type_dictionary is T in the paper
 type_dictionary = {}
@@ -154,7 +140,7 @@ for i in range(N_motif_type):
 		type_dictionary[i][j] = motifs[i][j]
 
 ###########################################
-def init_V_DBLP(seed_label, target_list):
+def init_V(seed_label, target_list):
 	V = []
 
 	V_target = np.zeros((node_type_number[target], N_clusters))
@@ -181,79 +167,40 @@ def init_V_DBLP(seed_label, target_list):
 
 	return V
 
-def init_V_YAGO(seed_label, target_list, seed_label_cnt, labels_dict_test_cnt, loc_list):
-	#get the maximum value from seed_label_cnt
-	seed_label_cnt_max = 0
-	seed_label_cnt_min = 1000000000
-	for key in seed_label_cnt:
-		if(seed_label_cnt_max < seed_label_cnt[key]):
-			seed_label_cnt_max = seed_label_cnt[key]
-
-		if(seed_label_cnt_min > seed_label_cnt[key]):
-			seed_label_cnt_min = seed_label_cnt[key]
-
-	#print('seed_label_cnt_max is: {}'.format(seed_label_cnt_max))
-	#print('seed_label_cnt_min is: {}'.format(seed_label_cnt_min))
-
-	seed_label_cnt_var = {}
-	#amplifier = 1000
+def init_V_YAGO(seed_label, target_list, loc_list):
+	
 	amplifier = 10
 	multiplier = 0.5
-	for key in seed_label_cnt:
-		#v0
-		seed_label_cnt_var[key] = amplifier
-
-	print('seed_label_cnt_var is: {}'.format(seed_label_cnt_var))
-
-	labels_dict_test_cnt_sum = 0
-	default_dist = np.ones(N_clusters)
 
 	V = []
 
-	V_author = np.zeros((node_type_number['P'], N_clusters))
+	V_target = np.zeros((node_type_number[target], N_clusters))
 
-	for i in range(N_persons):
+	for i in range(node_type_number[target]):
 		a = target_list[i]
 		if a in seed_label:
 			label = seed_label[a]
-			V_author[i][:] = 0
-			#V_author[i][label-1] = 1
-			V_author[i][label-1] = seed_label_cnt_var[label]
+			V_target[i][label-1] = amplifier
 		else:
-			V_author[i] = np.ones(N_clusters) * (amplifier / N_clusters)**multiplier
-			#V_author[i] = np.ones(N_clusters) * (amplifier / N_clusters)
-			#V_author[i] = default_dist
+			V_target[i] = np.ones(N_clusters)
 
 	V_location = np.zeros((node_type_number['L'], N_clusters))
-	for i in range(N_locs):
-		V_location[i][:] = 0
+	for i in range(node_type_number['L']):
 		V_location[i][addr_transform[loc_list[i]]-1] = amplifier
 
 	for i in range(N_motif_type):
 		V.append([])
 		m = motifs[i]
 		#Xinwei edited
-		# print(m)
 		m_new = number_remove(m)
-		#for j in range(len(m)):
 		for j in range(len(m_new)):
-			#print(m[j])
-			#if(not m[j].isalpha()):
-			#       continue
-			#if m[j] >= '1' and m[j] <= '6':
-			#       continue
-
-			#if m[j] == 'P':
-			if m_new[j] == 'P':
-				V_jm = V_author.copy()
+			if m_new[j] == target:
+				V_jm = V_target.copy()
 			elif m_new[j] == 'L':
 				V_jm = V_location.copy()
 			else:
-				#N_rows = node_type_number[m[j]]
 				N_rows = node_type_number[m_new[j]]
-				V_jm = np.full((N_rows, N_clusters), (amplifier / N_clusters) ** multiplier)
-				#V_jm = np.full((N_rows, N_clusters), (amplifier / N_clusters))
-
+				V_jm = np.ones((N_rows, N_clusters))
 
 			V[i].append(V_jm)
 
@@ -261,8 +208,6 @@ def init_V_YAGO(seed_label, target_list, seed_label_cnt, labels_dict_test_cnt, l
 
 
 def init_miu():
-	# miu = np.random.dirichlet(np.ones(N_motif_type),size=1)
-	# miu = np.ones(N_motif_type) / N_motif_type
 	miu = np.array(motif_weights)
 	return miu
 ############################################
@@ -283,7 +228,7 @@ for i in range(N_motif_type):
 				type_count_in_motifs[m][node_type] = 1
 			else:
 				type_count_in_motifs[m][node_type] += 1
-	elif args.task[:4] == 'DBLP':
+	else:
 		for j in range(len(m)):
 			node_type = type_dictionary[i][j]
 			if node_type not in type_count_in_motifs[m]:
@@ -294,17 +239,16 @@ for i in range(N_motif_type):
 #############################################
 
 # M^T is the mask for node type T
-def get_M(author_list, seed_label):
+def get_M(target_list, seed_label):
 	M = {}
 	for node_type in node_type_number:
 		mask_mtr = np.zeros((node_type_number[node_type], N_clusters))
 		M[node_type] = mask_mtr
 		if node_type == target:
 			count = 0
-			for a in author_list:
+			for a in target_list:
 				if a in seed_label:
-
-					idx = author_list.index(a)
+					idx = target_list.index(a)
 					count += 1
 					lb = seed_label[a]-1
 					for i in list(range(lb)) + list(range(lb+1, N_clusters)):
@@ -344,33 +288,28 @@ def get_V_star(V, miu):
 
 #########################################################################
 def multi_getL1(V, m_indices_list_part, motif_idx):
-	# ts = time.time()
 	m = motifs[motif_idx]
+	m_new = m
+	if args.task == 'YAGO':
+		m_new = number_remove(m)
 	acu = 0
 	for indices in m_indices_list_part:
 		vec = np.ones(N_clusters)
-		if args.task[:4] == 'DBLP':
-			for i in range(len(m)):
-				vec *= V[motif_idx][i][indices[i]]
-		elif args.task == 'YAGO':
-			m_new = number_remove(m)
-			for i in range(len(m_new)):
-				vec *= V[motif_idx][i][indices[i]]
+		for i in range(len(m_new)):
+			vec *= V[motif_idx][i][indices[i]]
 		acu += 2*np.sum(vec)
-	# te = time.time()
 	return acu
 
 
 def getL1_sp(V, motif_idx, m_indices_list):
 	m = motifs[motif_idx]
-	motif_size = len(m)
 	if args.task == 'YAGO':
-		m_new = number_remove(m)
-		motif_size = len(m_new)
+		m = number_remove(m)
+	motif_size = len(m)
+	
 	num_total_indices = len(m_indices_list)
 	
 	L1 = num_total_indices
-
 
 	t3 = time.time()
 
@@ -398,7 +337,6 @@ def getL1_sp(V, motif_idx, m_indices_list):
 				prod *= np.linalg.norm(np.multiply(first_vec**0.5, second_vec**0.5))**2
 			part3_sum += prod
 	L1 += part3_sum
-	t5 = time.time()
 	return L1
 
 
@@ -406,12 +344,10 @@ def getL1_sp(V, motif_idx, m_indices_list):
 def getL2(V, V_star, motif_idx):
 	L2 = 0
 	m = motifs[motif_idx]
-	mm = m
 	if args.task == 'YAGO':
-		m_new = number_remove(m)
-		mm = m_new
-	for i in range(len(mm)):
-		node_type = mm[i]
+		m = number_remove(m)
+	for i in range(len(m)):
+		node_type = m[i]
 		L2 += np.linalg.norm(V[motif_idx][i] - V_star[node_type], ord='fro')**2
 	return lambda1 * L2
 
@@ -425,17 +361,15 @@ def getL3(M, V_star):
 def getL4(V, motif_idx):
 	L4 = 0
 	m = motifs[motif_idx]
-	mm = m
 	if args.task == 'YAGO':
-		m_new = number_remove(m)
-		mm = m_new
-	for i in range(len(mm)):
+		m = number_remove(m)
+	for i in range(len(m)):
 		L4 += np.linalg.norm(V[motif_idx][i], ord=1)
 	return lambda3 * L4
 
 
 #########################################################################
-def prepare_T_vecs_DBLP():
+def prepare_T_vecs():
 	dict_list = []
 	dict_range_processes = []
 
@@ -473,7 +407,7 @@ def prepare_T_vecs_DBLP():
 
 	return (dict_list, dict_range_processes)
 
-def prepare_T_vecs_YAGO(labels_dict, all_person_l):
+def prepare_T_vecs_YAGO():
 	dict_list = []
 	dict_range_processes = []
 
@@ -485,10 +419,7 @@ def prepare_T_vecs_YAGO(labels_dict, all_person_l):
 
 		print("{} has {} instances".format(m, len(m_indices_list)))
 
-
 		#Xinwei edited
-		#m = motifs[motif_idx]
-		#print('m is: {}'.format(m))
 		m = number_remove(m)
 
 		dict_list.append([])
@@ -515,12 +446,10 @@ def prepare_T_vecs_YAGO(labels_dict, all_person_l):
 				part_dict.append({mk: indices_wo_j_to_j[mk] for mk in (list(indices_wo_j_to_j))[start : end]})
 			dict_range_processes[motif_idx].append(part_dict)
 
-
-	#exit(0)
 	return (dict_list, dict_range_processes)
 
+
 def multi_getU1D1(V, motif_idx, mtr_idx, part_indices_wo_j_to_j):
-	ts = time.time()
 	m = motifs[motif_idx]
 	mm = m
 	if args.task == 'YAGO':
@@ -538,7 +467,6 @@ def multi_getU1D1(V, motif_idx, mtr_idx, part_indices_wo_j_to_j):
 		for i in part_indices_wo_j_to_j[key]:
 			part_U1[i] += G_star_vec
 
-	te = time.time()
 	return part_U1
 
 
@@ -569,7 +497,6 @@ def get_U1_D1(V, motif_idx, mtr_idx, indices_wo_j_to_j, dict_range_processes):
 		D1 = np.multiply(D1, NcluNclu)
 
 	D1 = np.dot(V[motif_idx][mtr_idx], D1)
-	t4 = time.time()
 	return (U1, D1)
 
 
@@ -613,7 +540,6 @@ def get_U3_D3(V, miu, V_two_stars, motif_idx, mtr_idx, M):
 
 
 def get_U4_D4(V, motif_idx, mtr_idx):
-	m = motifs[motif_idx]
 	shape = V[motif_idx][mtr_idx].shape
 	U4 = np.zeros(shape)
 	D4 = np.ones(shape) * lambda3
@@ -760,101 +686,52 @@ if __name__ == "__main__":
 	#if(args.flag != 'eval'):
 
 	print("Reading in a list of entities")
-	target_list = Config.target_list
 
-	if args.task[:4] == 'DBLP':
-		with open(Config.target_list, 'rb') as f:
+	with open(Config.target_list, 'rb') as f:
 			target_list = pickle.load(f)
-	elif args.task == 'YAGO':
-		with open(Config.person_l, 'rb') as f:
-			person_l = pickle.load(f)
-		with open(Config.loc_list, 'rb') as f:
+
+	if args.task == 'YAGO':
+		with open(Config.list_prefix + 'loc_list.txt', 'rb') as f:
 			loc_list = pickle.load(f)
 
 	if args.debug:
 		print("Reading in labels")
-	if args.task[:4] == 'DBLP':
-		#labels_dict = label_author(seed_file)
-		labels_dict,_,_ = label_author_new(labelfile_train, labelfile_test)
-		author_idx_dict = {}
-		for i in range(node_type_number[target]):
-			author_idx_dict[target_list[i]] = i
-		target_type_list = target_list
-	elif args.task == 'YAGO':
-		countries = Config.countries
+	
+	labels_dict, seed_label, labels_dict_test = label_author_new(labelfile_train, labelfile_test)
+
+	if args.task == 'YAGO':
+		countries = ['AD:18735', 'AD:3402', 'AD:647', 'AD:738', 'AD:1652', 'AD:2673', 'AD:3983', 'AD:7110', 'AD:985', 'AD:701']
 		addr_transform = {}
 		for i in range(len(countries)):
 			addr_transform[countries[i]] = i+1
 
-		labels_dict,_,_ = label_author_new(labelfile_train,labelfile_test)
-		
-		all_person_l = person_l
-		person_idx_dict = {}
-		for i in range(N_persons):
-			person_idx_dict[all_person_l[i]] = i
-
-		target_type_list = all_person_l
-
-
-	label_cnt = {}
-	for a in target_type_list:
+	label_cnt = defaultdict(int)
+	for a in target_list:
 		label = labels_dict[a]
-		if label not in label_cnt:
-			label_cnt[label] = 1
-		else:
-			label_cnt[label] += 1
+		label_cnt[label] += 1
+
 	if args.debug:
 		print("label_cnt: {}".format(label_cnt))
-
-	seed_label = {}
-	labels_dict_test = {}
-
-	#write a seed loader here
-	_, seed_label, labels_dict_test = label_author_new(labelfile_train, labelfile_test)
-		
-	seed_label_cnt = {}
-	for a in seed_label:
-		l = seed_label[a]
-		if l not in seed_label_cnt:
-			seed_label_cnt[l] = 1
-		else:
-			seed_label_cnt[l] += 1
-	
-	#Xinwei edited
-	labels_dict_test_cnt = {}
-	for a in labels_dict_test:
-		l = labels_dict_test[a]
-		if l not in labels_dict_test_cnt:
-			labels_dict_test_cnt[l] = 1
-		else:
-			labels_dict_test_cnt[l] += 1
-
-	print('labels_dict_test_cnt:\n{}'.format(labels_dict_test_cnt))
-	
-	if args.debug:
-		print("seed_label_cnt: {}".format(seed_label_cnt))
 		print("Use {} labels as seed".format(len(seed_label)))
 		print("Use {} labels as test".format(len(labels_dict_test)))
-	
-
 
 	if(args.flag != 'eval'):
 
-		M = get_M(target_type_list, seed_label)
+		M = get_M(target_list, seed_label)
 		print("finish getting mask using seed labels")
 		
-		if args.task[:4] == 'DBLP':
-			V = init_V_DBLP(seed_label, target_list)
-		elif args.task == 'YAGO':
-			V = init_V_YAGO(seed_label, all_person_l, seed_label_cnt, labels_dict_test_cnt, loc_list)
+		if args.task == 'YAGO':
+			V = init_V_YAGO(seed_label, target_list, loc_list)
+		else:
+			V = init_V(seed_label, target_list)
 
 		miu = init_miu()
 		print("initialize miu to be {}".format(miu))
-
-		if args.task[:4] == 'DBLP':
-			dict_list, dict_range_processes = prepare_T_vecs_DBLP()
-		elif args.task == 'YAGO':
-			dict_list, dict_range_processes = prepare_T_vecs_YAGO(labels_dict, all_person_l)
+			
+		if args.task == 'YAGO':
+			dict_list, dict_range_processes = prepare_T_vecs_YAGO()
+		else:
+			dict_list, dict_range_processes = prepare_T_vecs()
 
 		print("finished prepare_T_vecs")
 
@@ -992,16 +869,15 @@ if __name__ == "__main__":
 					
 					partial_L2_miu[i] = get_partial_L2_miu(V, miu, V_three_stars, i)
 
-
 					partial_L3_miu[i] = get_partial_L3_miu(V, miu, M, V_three_stars, i)
-
 
 				miu_old = miu
 				miu = get_overall_rule_miu(miu, partial_L2_miu, partial_L3_miu)
-				print("miu before update")
-				print(miu_old)
-				print("miu after update in {}th iteration".format(miu_iters))
-				print(miu)
+				if args.debug:
+					print("miu before update")
+					print(miu_old)
+					print("miu after update in {}th iteration".format(miu_iters))
+					print(miu)
 
 				delta_miu = np.linalg.norm(miu_old - miu) ** 2
 				if delta_miu < 0.01:
@@ -1083,8 +959,9 @@ if __name__ == "__main__":
 				results[a] = (actual, predict)
 				clusters_prob_parse.append(clusters_prob[i])
 
-		print('results is: {}'.format(results))
-		print("Total test size: {}".format(total))
+		if args.debug:
+			print('results is: {}'.format(results))
+			print("Total test size: {}".format(total))
 		try:
 			print("Accuracy: {}".format(correct / total))
 		except ZeroDivisionError:

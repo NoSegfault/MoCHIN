@@ -1,10 +1,10 @@
 class Config:
 	motifs = ['AP', 'PV']
 
-	# motif_weights can be None
+	# set motif_weights to None to use default values
 	motif_weights = [.3, .7]
 
-	# lambdas can be None
+	# set lambdas to None to use default values
 	lambdas = [1, 10, .001]
 
 	N_clusters = 14
@@ -13,6 +13,7 @@ class Config:
 	seed_file = original_prefix + 'label-14-area.txt'
 	list_prefix = 'intermediate_area_final/'
 
+# 	node_type_number = {'P': N_papers, 'A': N_authors, 'V': N_venues, 'T': N_terms}
 	node_type_number = {'P': 2790, 'A': 7165, 'V': 36, 'T': 6109}
 	target = 'A'
 	target_list = original_prefix + 'single-author-list.txt'
