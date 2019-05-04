@@ -1,25 +1,23 @@
 class Config:
 	motifs = ['AP', 'PV']
 
-	# set motif_weights to None to use default values
-	motif_weights = [.3, .7]
-
 	# set lambdas to None to use default values
 	lambdas = [1, 10, .001]
 
 	N_clusters = 14
 
-	original_prefix = 'original_area_final/'
-	seed_file = original_prefix + 'label-14-area.txt'
-	list_prefix = 'intermediate_area_final/'
+	input_prefix = 'input_area/'
+	seed_file = input_prefix + 'label-14-area.txt'
 
-# 	node_type_number = {'P': N_papers, 'A': N_authors, 'V': N_venues, 'T': N_terms}
-	node_type_number = {'P': 2790, 'A': 7165, 'V': 36, 'T': 6109}
+	node_type_number = input_prefix + 'node-type-number.txt'
 	target = 'A'
-	target_list = original_prefix + 'single-author-list.txt'
+	target_list = input_prefix + 'single-author-list.txt'
 	
-	labelfile_train = 'train_test_split_area/dblp-area-train-label.txt'
-	labelfile_test = 'train_test_split_area/dblp-area-test-label.txt'
+	labelfile_train = input_prefix + 'train_test_split_area/dblp-area-train-label.txt'
+	labelfile_test = input_prefix + 'train_test_split_area/dblp-area-test-label.txt'
+
+	# set motif_weights to None to use default values
+	motif_weights = [.3, .7]
 
 	# System Settings:
 	# enable loss evaluation not at every inner-loop step (every k steps, where k is a variable)
