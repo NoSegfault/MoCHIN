@@ -11,26 +11,23 @@ Particularly, it includes
 (3) the class labels used in the DBLP and YAGO clustering tasks.
 
 ## Basic Usage
-	$ python3 MoCHIN.py $task $flag
+	$ python MoCHIN.py --task $name_of_the_task [--save_model $save_model_path --eval $file_to_be_evaluated —-debug]
 
 #### Input
 
-$lambda1: regularization1 weight
-$lambda2: regularization2 weight
-$lambda3: regularization3 weight
+--task TASK:	DBLP_AREA, DBLP_GROUP, YAGO, $SELF_DEFINED
 
-$m1: motif1 weight
-$m2: motif2 weight
-$mk: motifk weight
+--save_model SAVE_MODEL_PATH	run our model and save parameters to the specified path
 
-task: DBLP_AREA, DBLP_GROUP, YAGO_GROUP, $SELF_DEFINED
+--eval FILE_NAME	run evaluation on the specified file
 
-flag: save_model	run our model and save parameers to saved_model.pklz
-      eval:	evaluation the saved_model.pklz
+--debug	control ouput verbosity
 
 e.g.
 
-	$ python3 MoCHIN.py DBLP_GROUP save_model
+	$ python3 MoCHIN.py --task DBLP_AREA --save_model model.pklz --debug
+	
+will run the task DBLP_AREA and save the model to model.pklz with debug-level output.
 
 Please provide a config.py if running self-defined task.
 
