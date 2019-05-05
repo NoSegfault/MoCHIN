@@ -13,6 +13,7 @@ from sklearn.metrics import log_loss
 import gzip
 from collections import defaultdict
 import argparse
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--task", dest='task', action='store')
@@ -21,40 +22,28 @@ parser.add_argument('--eval', dest='file_name', action = 'store')
 parser.add_argument('--debug', dest='debug', action='store_true')
 args = parser.parse_args()
 
-if args.task == 'DBLP_GROUP':
-	from DBLP_group_config import *
-elif args.task == 'DBLP_AREA':
-	from DBLP_area_config import *
-elif args.task == 'YAGO':
-	from YAGO_config import *
-else:
-	from config import *
+sys.path.insert(0, args.task + '_config')
 
-seed_file = Config.seed_file
-N_clusters = Config.N_clusters
-labelfile_train = Config.labelfile_train
-labelfile_test = Config.labelfile_test
+from config import *
 
-if Config.lambdas:
+
+if lambdas:
 	# load lambdas if specified
-	[lambda1, lambda2, lambda3] = Config.lambdas
+	[lambda1, lambda2, lambda3] = lambdas
 else:
 	# use default lambdas
 	[lambda1, lambda2, lambda3] = [1, 10, .001]
 
-motifs = Config.motifs
+motifs = motifs
 
-if Config.motif_weights:
+if motif_weights:
 	# load motif initial wights if specified
-	motif_weights = Config.motif_weights
+	motif_weights = motif_weights
 	assert(len(motifs) == len(motif_weights))
 else:
 	# use default motif initial weights
 	motif_weights = [1./len(motifs)] * len(motifs)
 
-loss_eval_step_size = Config.loss_eval_step_size
-nprocesses_for_U1 = Config.nprocesses_for_U1
-nprocesses_for_L1 = Config.nprocesses_for_L1
 
 if args.debug:
 	print('[lambda1, lambda2, lambda3] is: {}'.format([lambda1, lambda2, lambda3]))
@@ -80,7 +69,7 @@ def motif_load(m, motif_idx):
 	print('motif_load\tmotif type:{}'.format(motif_idx))
 
 	ret = []
-	with gzip.open(Config.input_prefix + 'indices-list-{}.pklz'.format(m), 'rb') as f:
+	with gzip.open(input_prefix + 'indices-list-{}.pklz'.format(m), 'rb') as f:
 		ret = pickle.load(f)
 	return ret
 
@@ -110,9 +99,8 @@ def label_author(labelfile_train, labelfile_test):
 	return labels, seed_label, labels_dict_test
 
 
-with open(Config.node_type_number, 'rb') as f:
+with open(node_type_number, 'rb') as f:
 	node_type_number = pickle.load(f)
-target = Config.target
 
 type_dictionary = {}
 for i in range(N_motif_type):
@@ -828,7 +816,7 @@ def evaluation(file_name):
 
 
 	[V, miu] = [[], []]
-	#with gzip.open("saved_model.pklz", 'rb') as f:
+
 	with gzip.open(file_name, 'rb') as f:
 		[V, miu] = pickle.load(f)
 
@@ -838,13 +826,14 @@ def evaluation(file_name):
 
 	#Xinwei edited
 	clusters_prob = V_star[target]
-	print("clusters_prob:")
-	print(clusters_prob)
+	if args.debug:
+		print("clusters_prob:")
+		print(clusters_prob)
+		print("clusters:")
+		print(clusters)
+
 	clusters_prob_parse = []
 
-	print("clusters:")
-	print(clusters)
-	author_label = {}
 	total = 0
 	correct = 0
 	aal = []
@@ -852,12 +841,10 @@ def evaluation(file_name):
 
 	#new data only
 	results = {}
-	ind2area = np.zeros(10)
 
 	for i in range(len(target_list)):
 		a = target_list[i]
 		predict = clusters[i] + 1
-		author_label[a] = predict
 		if a in labels_dict_test:
 			total += 1
 			actual = labels_dict_test[a]
@@ -891,41 +878,29 @@ def evaluation(file_name):
 	print('len(np.array(aal)) is: {}'.format(len(np.array(aal))))
 	print('len(clusters_prob) is: {}'.format(len(clusters_prob)))
 	print('len(clusters_prob_parse) is: {}'.format(len(clusters_prob_parse)))
-	print("precision:")
-	print(precision)
+	print("precision: {}".format(precision))
 	print('micro precision: {}'.format(micro_precision))
 	print('macro precision: {}'.format(macro_precision))
-	print("recall:")
-	print(recall)
+	print("recall: {}".format(recall))
 	print('micro recall: {}'.format(micro_recall))
 	print('macro recall: {}'.format(macro_recall))
-	print("f1:")
-	print(f1)
+	print("f1: {}".format(f1))
 	print('micro f1: {}'.format(micro_f1))
 	print('macro f1: {}'.format(macro_f1))
-	print("nmi:")
-	print(nmi)
-	print("ll")
-	print(ll)
+	print("nmi: {}".format(nmi))
+	print("ll: {}".format(ll))
 
 
 if __name__ == "__main__":
 
 	print("Reading in a list of entities")
 
-	with open(Config.target_list, 'rb') as f:
+	with open(target_list, 'rb') as f:
 			target_list = pickle.load(f)
 
 	if args.task == 'YAGO':
-		with open(Config.input_prefix + 'loc_list.txt', 'rb') as f:
+		with open(input_prefix + 'loc_list.txt', 'rb') as f:
 			loc_list = pickle.load(f)
-
-	if args.debug:
-		print("Reading in labels")
-	
-	labels_dict, seed_label, labels_dict_test = label_author(labelfile_train, labelfile_test)
-
-	if args.task == 'YAGO':
 		countries = ['AD:18735', 'AD:3402', 'AD:647', 'AD:738', 'AD:1652', 'AD:2673', 'AD:3983', 'AD:7110', 'AD:985', 'AD:701']
 		addr_transform = {}
 		for i in range(len(countries)):
@@ -933,6 +908,11 @@ if __name__ == "__main__":
 		random.seed(15)
 	else:
 		random.seed(0)
+
+	if args.debug:
+		print("Reading in labels")
+	
+	labels_dict, seed_label, labels_dict_test = label_author(labelfile_train, labelfile_test)
 
 	label_cnt = defaultdict(int)
 	for a in target_list:
