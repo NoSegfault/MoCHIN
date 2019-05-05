@@ -15,20 +15,18 @@ from collections import defaultdict
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("task")
-parser.add_argument("flag")
+parser.add_argument("--task", dest='task', action='store')
+parser.add_argument('--save_model', dest='save_model_path', action = 'store')
+parser.add_argument('--eval', dest='file_name', action = 'store')
 parser.add_argument('--debug', dest='debug', action='store_true')
 args = parser.parse_args()
 
 if args.task == 'DBLP_GROUP':
 	from DBLP_group_config import *
-	random.seed(0)
 elif args.task == 'DBLP_AREA':
 	from DBLP_area_config import *
-	random.seed(0)
 elif args.task == 'YAGO':
 	from YAGO_config import *
-	random.seed(15)
 else:
 	from config import *
 
@@ -76,32 +74,18 @@ def number_remove(m):
 
 	return m_new
 
-###########################################
-#Xinwei edited
 
 def motif_load(m, motif_idx):
 
 	print('motif_load\tmotif type:{}'.format(motif_idx))
 
 	ret = []
-	with gzip.open(Config.list_prefix + 'indices-list-{}.pklz'.format(m), 'rb') as f:
+	with gzip.open(Config.input_prefix + 'indices-list-{}.pklz'.format(m), 'rb') as f:
 		ret = pickle.load(f)
 	return ret
 
 
-def label_author(labelfile):
-	with open(labelfile, "r") as f:
-		labels = {}
-		for line in f:
-			kv = line.split("\t")
-			kv[0] = kv[0].lower()
-			kv[1] = int(kv[1][:-1])
-			labels[kv[0]] = kv[1]
-
-	#f.close()
-	return labels
-
-def label_author_new(labelfile_train, labelfile_test):
+def label_author(labelfile_train, labelfile_test):
 	labels = {}
 	seed_label = {}
 	labels_dict_test = {}
@@ -112,7 +96,6 @@ def label_author_new(labelfile_train, labelfile_test):
 				kv[0] = kv[0].lower()
 			kv[1] = int(kv[1][:-1])
 			seed_label[kv[0]] = kv[1]
-
 
 	with open(labelfile_test, "r") as f:
 		for line in f:
@@ -126,12 +109,11 @@ def label_author_new(labelfile_train, labelfile_test):
 
 	return labels, seed_label, labels_dict_test
 
-###########################################
-node_type_number = Config.node_type_number
-target = Config.target
-###########################################
 
-# type_dictionary is T in the paper
+with open(Config.node_type_number, 'rb') as f:
+	node_type_number = pickle.load(f)
+target = Config.target
+
 type_dictionary = {}
 for i in range(N_motif_type):
 	type_dictionary[i] = {}
@@ -139,7 +121,6 @@ for i in range(N_motif_type):
 	for j in range(len(m)):
 		type_dictionary[i][j] = motifs[i][j]
 
-###########################################
 def init_V(seed_label, target_list):
 	V = []
 
@@ -210,7 +191,7 @@ def init_V_YAGO(seed_label, target_list, loc_list):
 def init_miu():
 	miu = np.array(motif_weights)
 	return miu
-############################################
+
 
 '''
 e.g. type_count_in_motifs["AAPP"] = {'A':2, 'P':2}
@@ -219,24 +200,17 @@ e.g. type_count_in_motifs["AAPP"] = {'A':2, 'P':2}
 type_count_in_motifs = {}
 for i in range(N_motif_type):
 	m = motifs[i]
-	type_count_in_motifs[m] = {}
+	type_count_in_motifs[m] = defaultdict(int)
 	if args.task == 'YAGO':
 		m_new = number_remove(m)
 		for j in range(len(m_new)):
 			node_type = m_new[j]
-			if node_type not in type_count_in_motifs[m]:
-				type_count_in_motifs[m][node_type] = 1
-			else:
-				type_count_in_motifs[m][node_type] += 1
+			type_count_in_motifs[m][node_type] += 1
 	else:
 		for j in range(len(m)):
-			node_type = type_dictionary[i][j]
-			if node_type not in type_count_in_motifs[m]:
-				type_count_in_motifs[m][node_type] = 1
-			else:
-				type_count_in_motifs[m][node_type] += 1
+			node_type = m[j]
+			type_count_in_motifs[m][node_type] += 1
 
-#############################################
 
 # M^T is the mask for node type T
 def get_M(target_list, seed_label):
@@ -254,12 +228,9 @@ def get_M(target_list, seed_label):
 					for i in list(range(lb)) + list(range(lb+1, N_clusters)):
 						mask_mtr[idx][i] = 1
 
-			# print("{} labels for Mask".format(count))
 
 	return M
 
-
-#########################################################################
 
 def get_V_two_stars(V, miu, motif_idx, mtr_idx, V_star):
 	m = motifs[motif_idx]
@@ -286,7 +257,6 @@ def get_V_star(V, miu):
 	return V_star
 
 
-#########################################################################
 def multi_getL1(V, m_indices_list_part, motif_idx):
 	m = motifs[motif_idx]
 	m_new = m
@@ -317,7 +287,7 @@ def getL1_sp(V, motif_idx, m_indices_list):
 	
 	acu = Parallel(n_jobs=nprocesses_for_L1)\
 			(delayed(multi_getL1)
-				(V, m_indices_list[indices_per_process*i : indices_per_process*(i+1) if i < nprocesses_for_L1-1 else num_total_indices], motif_idx)
+				(V, m_indices_list[indices_per_process * i : indices_per_process * (i + 1) if i < nprocesses_for_L1 - 1 else num_total_indices], motif_idx)
 				for i in range(nprocesses_for_L1))
 
 	part2_sum = sum(acu)
@@ -348,14 +318,14 @@ def getL2(V, V_star, motif_idx):
 		m = number_remove(m)
 	for i in range(len(m)):
 		node_type = m[i]
-		L2 += np.linalg.norm(V[motif_idx][i] - V_star[node_type], ord='fro')**2
+		L2 += np.linalg.norm(V[motif_idx][i] - V_star[node_type], ord = 'fro') ** 2
 	return lambda1 * L2
 
 
 def getL3(M, V_star):
 	L3 = 0
 	for node_type in node_type_number:
-		L3 += np.linalg.norm(np.multiply(M[node_type], V_star[node_type]), ord='fro')**2
+		L3 += np.linalg.norm(np.multiply(M[node_type], V_star[node_type]), ord = 'fro') ** 2
 	return lambda2 * L3
 
 def getL4(V, motif_idx):
@@ -364,11 +334,10 @@ def getL4(V, motif_idx):
 	if args.task == 'YAGO':
 		m = number_remove(m)
 	for i in range(len(m)):
-		L4 += np.linalg.norm(V[motif_idx][i], ord=1)
+		L4 += np.linalg.norm(V[motif_idx][i], ord = 1)
 	return lambda3 * L4
 
 
-#########################################################################
 def prepare_T_vecs():
 	dict_list = []
 	dict_range_processes = []
@@ -401,7 +370,7 @@ def prepare_T_vecs():
 
 			part_dict = []
 			for i in range(nprocesses_for_U1):
-				(start, end) = (i * dict_len_per_process, (i+1) * dict_len_per_process if i < nprocesses_for_U1-1 else dict_len)
+				(start, end) = (i * dict_len_per_process, (i + 1) * dict_len_per_process if i < nprocesses_for_U1 - 1 else dict_len)
 				part_dict.append({mk: indices_wo_j_to_j[mk] for mk in (list(indices_wo_j_to_j))[start : end]})
 			dict_range_processes[motif_idx].append(part_dict)
 
@@ -442,7 +411,7 @@ def prepare_T_vecs_YAGO():
 
 			part_dict = []
 			for i in range(nprocesses_for_U1):
-				(start, end) = (i * dict_len_per_process, (i+1) * dict_len_per_process if i < nprocesses_for_U1-1 else dict_len)
+				(start, end) = (i * dict_len_per_process, (i + 1) * dict_len_per_process if i < nprocesses_for_U1 - 1 else dict_len)
 				part_dict.append({mk: indices_wo_j_to_j[mk] for mk in (list(indices_wo_j_to_j))[start : end]})
 			dict_range_processes[motif_idx].append(part_dict)
 
@@ -521,7 +490,7 @@ def get_U2_D2(V, miu, V_two_stars, motif_idx, mtr_idx):
 				neg = (np.absolute(subtract_res) - subtract_res) / 2
 				U2 += cons * pos
 				D2 += cons * neg
-				D2 += cons**2 * V[motif_idx][mtr_idx]
+				D2 += cons ** 2 * V[motif_idx][mtr_idx]
 
 	return (U2, D2)
 
@@ -535,7 +504,7 @@ def get_U3_D3(V, miu, V_two_stars, motif_idx, mtr_idx, M):
 	U3 = np.zeros(shape)
 	D3 = np.zeros(shape)
 	cf = miu[motif_idx] / type_count_in_motifs[m][node_type]
-	D3 = cf**2 * np.multiply(M[node_type], V[motif_idx][mtr_idx]) + cf*np.multiply(M[node_type], V_two_stars)
+	D3 = cf ** 2 * np.multiply(M[node_type], V[motif_idx][mtr_idx]) + cf*np.multiply(M[node_type], V_two_stars)
 	return (U3, D3)
 
 
@@ -588,7 +557,6 @@ def get_partial_L2_miu(V, miu, V_three_stars, motif_idx):
 	l_new = l
 	if args.task == 'YAGO':
 		l_new = number_remove(l)
-	# below is update rule for L2 for [motif_idx]th miu
 
 	for i in range(N_motif_type):
 		m = motifs[i]
@@ -610,7 +578,7 @@ def get_partial_L2_miu(V, miu, V_three_stars, motif_idx):
 					right_in_trace += V[motif_idx][k] / type_count_in_motifs[l][node_type]
 			
 
-			partial_L2_miu += -2 * trace_of_dot(left_in_trace, np.transpose(right_in_trace)) + 2 * miu[motif_idx] * np.linalg.norm(right_in_trace)**2
+			partial_L2_miu += - 2 * trace_of_dot(left_in_trace, np.transpose(right_in_trace)) + 2 * miu[motif_idx] * np.linalg.norm(right_in_trace)**2
 
 	return partial_L2_miu * lambda1
 
@@ -628,7 +596,7 @@ def get_partial_L3_miu(V, miu, M, V_three_stars, motif_idx):
 		for i in range(len(l_new)):
 			if l_new[i] == t:
 				sum_result += np.multiply(M[t], V[motif_idx][i]) / type_count_in_motifs[l][t]
-		partial_L3_miu += miu[motif_idx] * np.linalg.norm(sum_result)**2
+		partial_L3_miu += miu[motif_idx] * np.linalg.norm(sum_result) ** 2
 
 		if t in V_three_stars[motif_idx]:
 			partial_L3_miu += trace_of_dot(sum_result, np.transpose(np.multiply(M[t], V_three_stars[motif_idx][t])))
@@ -681,9 +649,267 @@ def eval_loss(V, miu, M):
 		print("loss after update: {}".format(L1+L2+L3+L4))
 	return (L1, L2, L3, L4)
 
-if __name__ == "__main__":
 
-	#if(args.flag != 'eval'):
+
+
+def algorithm(V, miu, M, dict_list, dict_range_processes):
+
+
+	N_iters = 0
+	#choose outer iterations
+	while N_iters < 2:
+		print("Begin {}th overall iteration".format(N_iters))
+
+		big_ite = 0
+		while True:
+			print("big_ite is {}".format(big_ite))
+			p_L1, p_L2, p_L3, p_L4 = eval_loss(V, miu, M)
+			for i in range(N_motif_type):
+				m = motifs[i]
+				m_new = m
+				if args.task == 'YAGO':
+					m_new = number_remove(m)
+				for j in range(len(m_new)):
+					if args.debug:
+						print("updating motif {} matrix {}".format(i, j))
+					ite = 0
+					while True:
+						if args.debug:
+							print("{}th iteration".format(ite))
+						if ite == 0:
+							prev_L1, prev_L2, prev_L3, prev_L4 = eval_loss(V, miu, M)
+						else:
+							prev_L1, prev_L2, prev_L3, prev_L4 = L1, L2, L3, L4
+
+						t1 = time.time()
+						V_star = get_V_star(V, miu)
+						V_two_stars = get_V_two_stars(V, miu, i, j, V_star)
+						
+						(U1, D1) = get_U1_D1(V, i, j, dict_list[i][j], dict_range_processes[i][j])
+						(U2, D2) = get_U2_D2(V, miu, V_two_stars, i, j)
+						(U3, D3) = get_U3_D3(V, miu, V_two_stars, i, j, M)
+						(U4, D4) = get_U4_D4(V, i, j)
+						
+						V_old = V[i][j]
+						V[i][j] = get_overall_rule_V(V, i, j, U1, D1, U2, D2, U3, D3, U4, D4)
+						if args.debug:
+							print("before update V[{}][{}]:".format(i, j))
+							print(V_old)
+							print("after update V[{}][{}]:".format(i, j))
+							print(V[i][j])
+						t2 = time.time()
+
+						delta_V = np.linalg.norm(V_old - V[i][j]) ** 2
+
+						if args.debug:
+							print("time for update rule: {}".format(t2-t1))
+							print("delta_V")
+							print(delta_V)
+
+						if delta_V < 0.1:
+							break
+
+						if ite % loss_eval_step_size == 0:
+							(L1, L2, L3, L4) = eval_loss(V, miu, M)
+						
+							
+							delta = prev_L1 - L1 + prev_L2 - L2 + prev_L3 - L3 + prev_L4 - L4
+							if args.debug:
+								print("delta:")
+								print(prev_L1 - L1)
+								print(prev_L2 - L2)
+								print(prev_L3 - L3)
+								print(prev_L4 - L4)
+								print(delta)
+
+							#Xinwei edited 1.e-5 -> 1.e-2
+							if delta / (prev_L1 + prev_L2 + prev_L3 + prev_L4) < 1.e-8 or ite == 10:
+								break
+
+						ite += 1
+						
+			(L1, L2, L3, L4) = eval_loss(V, miu, M)
+			big_ite += 1
+			delta = p_L1 - L1 + p_L2 - L2 + p_L3 - L3 + p_L4 - L4
+
+			#Xinwei edited 1.e-3 -> 1.e-2; 20 -> 4
+			if delta / (p_L1 + p_L2 + p_L3 + p_L4) < 1.e-8 or big_ite == 10:
+				break
+
+		L1 = np.zeros(N_motif_type)
+		L2 = np.zeros(N_motif_type)
+		L4 = np.zeros(N_motif_type)
+		V_star = get_V_star(V, miu)
+
+		for i in range(N_motif_type):
+			m_indices_list = all_indices_list[i]
+
+
+			L1[i] = getL1_sp(V, i, m_indices_list)
+			L2[i] = getL2(V, V_star, i)
+			L4[i] = getL4(V, i)
+		L3 = getL3(M, V_star)
+		total_loss = np.sum(L1) + np.sum(L2) + L3 + np.sum(L4)
+
+
+		# steps to update miu
+		miu_iters = 0
+		while True:
+			V_star = get_V_star(V, miu)
+			m_L1 = 0
+			m_L2 = 0
+			m_L4 = 0
+			for i in range(N_motif_type):
+				#Xinwei edited
+
+				m_indices_list = all_indices_list[i]
+
+
+				m_L1 += getL1_sp(V, i, m_indices_list)
+				m_L2 += getL2(V, V_star, i)
+				m_L4 += getL4(V, i)
+
+			m_L3 = getL3(M, V_star)
+
+			partial_L2_miu = np.zeros(N_motif_type)
+			partial_L3_miu = np.zeros(N_motif_type)
+
+			V_three_stars = get_V_three_stars(V, miu)
+			for i in range(N_motif_type):
+				# need to get partial_L_miu[i]
+				
+				partial_L2_miu[i] = get_partial_L2_miu(V, miu, V_three_stars, i)
+
+				partial_L3_miu[i] = get_partial_L3_miu(V, miu, M, V_three_stars, i)
+
+			miu_old = miu
+			miu = get_overall_rule_miu(miu, partial_L2_miu, partial_L3_miu)
+			if args.debug:
+				print("miu before update")
+				print(miu_old)
+				print("miu after update in {}th iteration".format(miu_iters))
+				print(miu)
+
+			delta_miu = np.linalg.norm(miu_old - miu) ** 2
+			if delta_miu < 0.01:
+				break
+
+			V_star = get_V_star(V, miu)
+			L1 = 0
+			L2 = 0
+			L4 = 0
+			for i in range(N_motif_type):
+
+				m_indices_list = all_indices_list[i]
+
+				L1 += getL1_sp(V, i, m_indices_list)
+				L2 += getL2(V, V_star, i)
+				L4 += getL4(V, i)
+			L3 = getL3(M, V_star)
+
+			delta = m_L1 - L1 + m_L2 - L2 + m_L3 - L3 + m_L4 - L4
+			print("delta: {}".format(delta))
+
+			#Xinwei edited 1.e-8 -> 1.e-3; 10 -> 3
+			if np.abs(delta / (m_L1 + m_L2 + m_L3 + m_L4)) < 1.e-8 or miu_iters == 30:
+				break
+
+			miu_iters += 1
+
+		# finished miu update
+		N_iters += 1
+
+	if args.debug:
+		print("After all update, need to cluster and evaluate")
+
+
+
+def evaluation(file_name):
+
+
+	[V, miu] = [[], []]
+	#with gzip.open("saved_model.pklz", 'rb') as f:
+	with gzip.open(file_name, 'rb') as f:
+		[V, miu] = pickle.load(f)
+
+	
+	V_star = get_V_star(V, miu)
+	clusters = np.argmax(V_star[target], axis = 1)
+
+	#Xinwei edited
+	clusters_prob = V_star[target]
+	print("clusters_prob:")
+	print(clusters_prob)
+	clusters_prob_parse = []
+
+	print("clusters:")
+	print(clusters)
+	author_label = {}
+	total = 0
+	correct = 0
+	aal = []
+	ppl = []
+
+	#new data only
+	results = {}
+	ind2area = np.zeros(10)
+
+	for i in range(len(target_list)):
+		a = target_list[i]
+		predict = clusters[i] + 1
+		author_label[a] = predict
+		if a in labels_dict_test:
+			total += 1
+			actual = labels_dict_test[a]
+			if actual == predict:
+				correct += 1
+			aal.append(actual)
+			ppl.append(predict)
+			results[a] = (actual, predict)
+			clusters_prob_parse.append(clusters_prob[i])
+
+	if args.debug:
+		print('results is: {}'.format(results))
+		print("Total test size: {}".format(total))
+	try:
+		print("Accuracy: {}".format(correct / total))
+	except ZeroDivisionError:
+		print("0 total labels")
+
+	precision = precision_score(np.array(aal), np.array(ppl), average = None)
+	micro_precision = precision_score(np.array(aal), np.array(ppl), average='micro')
+	macro_precision = precision_score(np.array(aal), np.array(ppl), average='macro')
+	recall = recall_score(np.array(aal), np.array(ppl), average = None)
+	micro_recall = recall_score(np.array(aal), np.array(ppl), average='micro')
+	macro_recall = recall_score(np.array(aal), np.array(ppl), average='macro')
+	f1 = f1_score(np.array(aal), np.array(ppl), average=None)
+	micro_f1 = f1_score(np.array(aal), np.array(ppl), average='micro')
+	macro_f1 = f1_score(np.array(aal), np.array(ppl), average='macro')
+	nmi = normalized_mutual_info_score(np.array(aal), np.array(ppl))
+	ll = log_loss(np.array(aal), clusters_prob_parse)
+
+	print('len(np.array(aal)) is: {}'.format(len(np.array(aal))))
+	print('len(clusters_prob) is: {}'.format(len(clusters_prob)))
+	print('len(clusters_prob_parse) is: {}'.format(len(clusters_prob_parse)))
+	print("precision:")
+	print(precision)
+	print('micro precision: {}'.format(micro_precision))
+	print('macro precision: {}'.format(macro_precision))
+	print("recall:")
+	print(recall)
+	print('micro recall: {}'.format(micro_recall))
+	print('macro recall: {}'.format(macro_recall))
+	print("f1:")
+	print(f1)
+	print('micro f1: {}'.format(micro_f1))
+	print('macro f1: {}'.format(macro_f1))
+	print("nmi:")
+	print(nmi)
+	print("ll")
+	print(ll)
+
+
+if __name__ == "__main__":
 
 	print("Reading in a list of entities")
 
@@ -691,19 +917,22 @@ if __name__ == "__main__":
 			target_list = pickle.load(f)
 
 	if args.task == 'YAGO':
-		with open(Config.list_prefix + 'loc_list.txt', 'rb') as f:
+		with open(Config.input_prefix + 'loc_list.txt', 'rb') as f:
 			loc_list = pickle.load(f)
 
 	if args.debug:
 		print("Reading in labels")
 	
-	labels_dict, seed_label, labels_dict_test = label_author_new(labelfile_train, labelfile_test)
+	labels_dict, seed_label, labels_dict_test = label_author(labelfile_train, labelfile_test)
 
 	if args.task == 'YAGO':
 		countries = ['AD:18735', 'AD:3402', 'AD:647', 'AD:738', 'AD:1652', 'AD:2673', 'AD:3983', 'AD:7110', 'AD:985', 'AD:701']
 		addr_transform = {}
 		for i in range(len(countries)):
 			addr_transform[countries[i]] = i+1
+		random.seed(15)
+	else:
+		random.seed(0)
 
 	label_cnt = defaultdict(int)
 	for a in target_list:
@@ -715,7 +944,7 @@ if __name__ == "__main__":
 		print("Use {} labels as seed".format(len(seed_label)))
 		print("Use {} labels as test".format(len(labels_dict_test)))
 
-	if(args.flag != 'eval'):
+	if(args.file_name == None):
 
 		M = get_M(target_list, seed_label)
 		print("finish getting mask using seed labels")
@@ -738,266 +967,18 @@ if __name__ == "__main__":
 		V_star = get_V_star(V, miu)
 		print("finished get_V_star")
 
-		N_iters = 0
-		#hardcoded here
-		while N_iters < 2:
-			print("Begin {}th overall iteration".format(N_iters))
+		#parametrs needed: V, miu, M, dict_list, dict_range_procoess,
+		algorithm(V, miu, M, dict_list, dict_range_processes)
 
-			big_ite = 0
-			while True:
-				print("big_ite is {}".format(big_ite))
-				p_L1, p_L2, p_L3, p_L4 = eval_loss(V, miu, M)
-				for i in range(N_motif_type):
-					m = motifs[i]
-					m_new = m
-					if args.task == 'YAGO':
-						m_new = number_remove(m)
-					for j in range(len(m_new)):
-						if args.debug:
-							print("updating motif {} matrix {}".format(i, j))
-						ite = 0
-						while True:
-							if args.debug:
-								print("{}th iteration".format(ite))
-							if ite == 0:
-								prev_L1, prev_L2, prev_L3, prev_L4 = eval_loss(V, miu, M)
-							else:
-								prev_L1, prev_L2, prev_L3, prev_L4 = L1, L2, L3, L4
-
-							t1 = time.time()
-							V_star = get_V_star(V, miu)
-							V_two_stars = get_V_two_stars(V, miu, i, j, V_star)
-							
-							(U1, D1) = get_U1_D1(V, i, j, dict_list[i][j], dict_range_processes[i][j])
-							(U2, D2) = get_U2_D2(V, miu, V_two_stars, i, j)
-							(U3, D3) = get_U3_D3(V, miu, V_two_stars, i, j, M)
-							(U4, D4) = get_U4_D4(V, i, j)
-							
-							V_old = V[i][j]
-							V[i][j] = get_overall_rule_V(V, i, j, U1, D1, U2, D2, U3, D3, U4, D4)
-							if args.debug:
-								print("before update V[{}][{}]:".format(i, j))
-								print(V_old)
-								print("after update V[{}][{}]:".format(i, j))
-								print(V[i][j])
-							t2 = time.time()
-
-							delta_V = np.linalg.norm(V_old - V[i][j]) ** 2
-
-							if args.debug:
-								print("time for update rule: {}".format(t2-t1))
-								print("delta_V")
-								print(delta_V)
-
-							if delta_V < 0.1:
-								break
-
-							if ite % loss_eval_step_size == 0:
-								(L1, L2, L3, L4) = eval_loss(V, miu, M)
-							
-								
-								delta = prev_L1 - L1 + prev_L2 - L2 + prev_L3 - L3 + prev_L4 - L4
-								if args.debug:
-									print("delta:")
-									print(prev_L1 - L1)
-									print(prev_L2 - L2)
-									print(prev_L3 - L3)
-									print(prev_L4 - L4)
-									print(delta)
-
-								#Xinwei edited 1.e-5 -> 1.e-2
-								if delta / (prev_L1 + prev_L2 + prev_L3 + prev_L4) < 1.e-8 or ite == 10:
-									break
-
-							ite += 1
-							
-				(L1, L2, L3, L4) = eval_loss(V, miu, M)
-				big_ite += 1
-				delta = p_L1 - L1 + p_L2 - L2 + p_L3 - L3 + p_L4 - L4
-
-				#Xinwei edited 1.e-3 -> 1.e-2; 20 -> 4
-				if delta / (p_L1 + p_L2 + p_L3 + p_L4) < 1.e-8 or big_ite == 10:
-					break
-
-			L1 = np.zeros(N_motif_type)
-			L2 = np.zeros(N_motif_type)
-			L4 = np.zeros(N_motif_type)
-			V_star = get_V_star(V, miu)
-
-			for i in range(N_motif_type):
-				#Xinwei edited
-				'''
-				with gzip.open("intermediate/indices-list-{}.pklz".format(motifs[i]), 'rb') as f:
-					m_indices_list = pickle.load(f)
-				'''
-				m_indices_list = all_indices_list[i]
-
-
-				L1[i] = getL1_sp(V, i, m_indices_list)
-				L2[i] = getL2(V, V_star, i)
-				L4[i] = getL4(V, i)
-			L3 = getL3(M, V_star)
-			total_loss = np.sum(L1) + np.sum(L2) + L3 + np.sum(L4)
-
-
-			# steps to update miu
-			############################################################################
-			miu_iters = 0
-			while True:
-				V_star = get_V_star(V, miu)
-				m_L1 = 0
-				m_L2 = 0
-				m_L4 = 0
-				for i in range(N_motif_type):
-					#Xinwei edited
-
-					m_indices_list = all_indices_list[i]
-
-
-					m_L1 += getL1_sp(V, i, m_indices_list)
-					m_L2 += getL2(V, V_star, i)
-					m_L4 += getL4(V, i)
-
-				m_L3 = getL3(M, V_star)
-
-				partial_L2_miu = np.zeros(N_motif_type)
-				partial_L3_miu = np.zeros(N_motif_type)
-
-				V_three_stars = get_V_three_stars(V, miu)
-				for i in range(N_motif_type):
-					# need to get partial_L_miu[i]
-					
-					partial_L2_miu[i] = get_partial_L2_miu(V, miu, V_three_stars, i)
-
-					partial_L3_miu[i] = get_partial_L3_miu(V, miu, M, V_three_stars, i)
-
-				miu_old = miu
-				miu = get_overall_rule_miu(miu, partial_L2_miu, partial_L3_miu)
-				if args.debug:
-					print("miu before update")
-					print(miu_old)
-					print("miu after update in {}th iteration".format(miu_iters))
-					print(miu)
-
-				delta_miu = np.linalg.norm(miu_old - miu) ** 2
-				if delta_miu < 0.01:
-					break
-
-				V_star = get_V_star(V, miu)
-				L1 = 0
-				L2 = 0
-				L4 = 0
-				for i in range(N_motif_type):
-
-					m_indices_list = all_indices_list[i]
-
-					L1 += getL1_sp(V, i, m_indices_list)
-					L2 += getL2(V, V_star, i)
-					L4 += getL4(V, i)
-				L3 = getL3(M, V_star)
-
-				delta = m_L1 - L1 + m_L2 - L2 + m_L3 - L3 + m_L4 - L4
-				print("delta: {}".format(delta))
-
-				#Xinwei edited 1.e-8 -> 1.e-3; 10 -> 3
-				if np.abs(delta / (m_L1 + m_L2 + m_L3 + m_L4)) < 1.e-8 or miu_iters == 30:
-					break
-
-				miu_iters += 1
-
-			# finished miu update
-			N_iters += 1
-
-		if args.debug:
-			print("After all update, need to cluster and evaluate")
-		
-		#Xinwei edited
-		if(args.flag == 'save_model'):
-			f = gzip.open("saved_model.pklz", 'wb')
+		if(args.save_model_path != None):
+			f = gzip.open(args.save_model_path, 'wb')
 			V_miu = [V, miu]
 			pickle.dump(V_miu, f)
 			f.close()
 
 	else:
-		[V, miu] = [[], []]
-		with gzip.open("saved_model.pklz", 'rb') as f:
-			[V, miu] = pickle.load(f)
-
 		
-		V_star = get_V_star(V, miu)
-		clusters = np.argmax(V_star[target], axis = 1)
-
-		#Xinwei edited
-		clusters_prob = V_star[target]
-		print("clusters_prob:")
-		print(clusters_prob)
-		clusters_prob_parse = []
-
-		print("clusters:")
-		print(clusters)
-		author_label = {}
-		total = 0
-		correct = 0
-		aal = []
-		ppl = []
-
-		#new data only
-		results = {}
-		ind2area = np.zeros(10)
-
-		for i in range(len(target_list)):
-			a = target_list[i]
-			predict = clusters[i] + 1
-			author_label[a] = predict
-			if a in labels_dict_test:
-				total += 1
-				actual = labels_dict_test[a]
-				if actual == predict:
-					correct += 1
-				aal.append(actual)
-				ppl.append(predict)
-				results[a] = (actual, predict)
-				clusters_prob_parse.append(clusters_prob[i])
-
-		if args.debug:
-			print('results is: {}'.format(results))
-			print("Total test size: {}".format(total))
-		try:
-			print("Accuracy: {}".format(correct / total))
-		except ZeroDivisionError:
-			print("0 total labels")
-
-		precision = precision_score(np.array(aal), np.array(ppl), average = None)
-		micro_precision = precision_score(np.array(aal), np.array(ppl), average='micro')
-		macro_precision = precision_score(np.array(aal), np.array(ppl), average='macro')
-		recall = recall_score(np.array(aal), np.array(ppl), average = None)
-		micro_recall = recall_score(np.array(aal), np.array(ppl), average='micro')
-		macro_recall = recall_score(np.array(aal), np.array(ppl), average='macro')
-		f1 = f1_score(np.array(aal), np.array(ppl), average=None)
-		micro_f1 = f1_score(np.array(aal), np.array(ppl), average='micro')
-		macro_f1 = f1_score(np.array(aal), np.array(ppl), average='macro')
-		nmi = normalized_mutual_info_score(np.array(aal), np.array(ppl))
-		ll = log_loss(np.array(aal), clusters_prob_parse)
-
-		print('len(np.array(aal)) is: {}'.format(len(np.array(aal))))
-		print('len(clusters_prob) is: {}'.format(len(clusters_prob)))
-		print('len(clusters_prob_parse) is: {}'.format(len(clusters_prob_parse)))
-		print("precision:")
-		print(precision)
-		print('micro precision: {}'.format(micro_precision))
-		print('macro precision: {}'.format(macro_precision))
-		print("recall:")
-		print(recall)
-		print('micro recall: {}'.format(micro_recall))
-		print('macro recall: {}'.format(macro_recall))
-		print("f1:")
-		print(f1)
-		print('micro f1: {}'.format(micro_f1))
-		print('macro f1: {}'.format(macro_f1))
-		print("nmi:")
-		print(nmi)
-		print("ll")
-		print(ll)
+		evaluation(args.file_name)
 
 
 
