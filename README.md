@@ -13,6 +13,8 @@ Particularly, it includes
 ## Basic Usage
 	$ python MoCHIN.py --task $name_of_the_task [--save_model $save_model_path --eval $file_to_be_evaluated —-debug]
 
+where the arguments in the brackets are optional.
+
 #### Input
 
 --task TASK:	DBLP_AREA, DBLP_GROUP, YAGO, $SELF_DEFINED
