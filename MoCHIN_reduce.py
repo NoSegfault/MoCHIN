@@ -15,7 +15,7 @@ from collections import defaultdict
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("task")
+parser.add_argument("--task", dest='task', action='store')
 parser.add_argument('--save_model', dest='save_model_path', action = 'store')
 parser.add_argument('--eval', dest='file_name', action = 'store')
 parser.add_argument('--debug', dest='debug', action='store_true')
@@ -23,13 +23,10 @@ args = parser.parse_args()
 
 if args.task == 'DBLP_GROUP':
 	from DBLP_group_config import *
-	random.seed(0)
 elif args.task == 'DBLP_AREA':
 	from DBLP_area_config import *
-	random.seed(0)
 elif args.task == 'YAGO':
 	from YAGO_config import *
-	random.seed(15)
 else:
 	from config import *
 
@@ -83,24 +80,12 @@ def motif_load(m, motif_idx):
 	print('motif_load\tmotif type:{}'.format(motif_idx))
 
 	ret = []
-	with gzip.open(Config.list_prefix + 'indices-list-{}.pklz'.format(m), 'rb') as f:
+	with gzip.open(Config.input_prefix + 'indices-list-{}.pklz'.format(m), 'rb') as f:
 		ret = pickle.load(f)
 	return ret
 
 
-def label_author(labelfile):
-	with open(labelfile, "r") as f:
-		labels = {}
-		for line in f:
-			kv = line.split("\t")
-			kv[0] = kv[0].lower()
-			kv[1] = int(kv[1][:-1])
-			labels[kv[0]] = kv[1]
-
-	#f.close()
-	return labels
-
-def label_author_new(labelfile_train, labelfile_test):
+def label_author(labelfile_train, labelfile_test):
 	labels = {}
 	seed_label = {}
 	labels_dict_test = {}
@@ -111,7 +96,6 @@ def label_author_new(labelfile_train, labelfile_test):
 				kv[0] = kv[0].lower()
 			kv[1] = int(kv[1][:-1])
 			seed_label[kv[0]] = kv[1]
-
 
 	with open(labelfile_test, "r") as f:
 		for line in f:
@@ -125,7 +109,9 @@ def label_author_new(labelfile_train, labelfile_test):
 
 	return labels, seed_label, labels_dict_test
 
-node_type_number = Config.node_type_number
+
+with open(Config.node_type_number, 'rb') as f:
+	node_type_number = pickle.load(f)
 target = Config.target
 
 type_dictionary = {}
@@ -206,6 +192,7 @@ def init_miu():
 	miu = np.array(motif_weights)
 	return miu
 
+
 '''
 e.g. type_count_in_motifs["AAPP"] = {'A':2, 'P':2}
 	 type_count_in_motifs["APPPV"] = {'A':1, 'P':3, 'V':1}
@@ -213,22 +200,16 @@ e.g. type_count_in_motifs["AAPP"] = {'A':2, 'P':2}
 type_count_in_motifs = {}
 for i in range(N_motif_type):
 	m = motifs[i]
-	type_count_in_motifs[m] = {}
+	type_count_in_motifs[m] = defaultdict(int)
 	if args.task == 'YAGO':
 		m_new = number_remove(m)
 		for j in range(len(m_new)):
 			node_type = m_new[j]
-			if node_type not in type_count_in_motifs[m]:
-				type_count_in_motifs[m][node_type] = 1
-			else:
-				type_count_in_motifs[m][node_type] += 1
+			type_count_in_motifs[m][node_type] += 1
 	else:
 		for j in range(len(m)):
-			node_type = type_dictionary[i][j]
-			if node_type not in type_count_in_motifs[m]:
-				type_count_in_motifs[m][node_type] = 1
-			else:
-				type_count_in_motifs[m][node_type] += 1
+			node_type = m[j]
+			type_count_in_motifs[m][node_type] += 1
 
 
 # M^T is the mask for node type T
@@ -843,12 +824,12 @@ def algorithm(V, miu, M, dict_list, dict_range_processes):
 
 
 
-def evaluation(args.file_name):
+def evaluation(file_name):
 
 
 	[V, miu] = [[], []]
 	#with gzip.open("saved_model.pklz", 'rb') as f:
-	with gzip.open(args.file_name, 'rb') as f:
+	with gzip.open(file_name, 'rb') as f:
 		[V, miu] = pickle.load(f)
 
 	
@@ -930,26 +911,28 @@ def evaluation(args.file_name):
 
 if __name__ == "__main__":
 
-
 	print("Reading in a list of entities")
 
 	with open(Config.target_list, 'rb') as f:
 			target_list = pickle.load(f)
 
 	if args.task == 'YAGO':
-		with open(Config.list_prefix + 'loc_list.txt', 'rb') as f:
+		with open(Config.input_prefix + 'loc_list.txt', 'rb') as f:
 			loc_list = pickle.load(f)
 
 	if args.debug:
 		print("Reading in labels")
 	
-	labels_dict, seed_label, labels_dict_test = label_author_new(labelfile_train, labelfile_test)
+	labels_dict, seed_label, labels_dict_test = label_author(labelfile_train, labelfile_test)
 
 	if args.task == 'YAGO':
 		countries = ['AD:18735', 'AD:3402', 'AD:647', 'AD:738', 'AD:1652', 'AD:2673', 'AD:3983', 'AD:7110', 'AD:985', 'AD:701']
 		addr_transform = {}
 		for i in range(len(countries)):
 			addr_transform[countries[i]] = i+1
+		random.seed(15)
+	else:
+		random.seed(0)
 
 	label_cnt = defaultdict(int)
 	for a in target_list:
