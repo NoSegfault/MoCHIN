@@ -815,17 +815,31 @@ def algorithm(V, miu, M, dict_list, dict_range_processes):
 def evaluation(file_name):
 
 
-	[V, miu] = [[], []]
+	#[V, miu] = [[], []]
+	#V_target = [[]]
+	V_target = []
+	#with gzip.open(file_name, 'rb') as f:
+		#[V, miu] = pickle.load(f)
+		#V_target = pickle.load(f)
 
-	with gzip.open(file_name, 'rb') as f:
-		[V, miu] = pickle.load(f)
+	#with open(file_name, 'r') as fin:
+	with open(file_name + '.tsv', 'r') as fin:
+		for line in fin:
+			l = line[0:-1].split('\t')
+			l = [float(x) for x in l]
+			V_target.append(l)
+
+			
 
 	
-	V_star = get_V_star(V, miu)
-	clusters = np.argmax(V_star[target], axis = 1)
-
+	#V_star = get_V_star(V, miu)
+	
+	#clusters = np.argmax(V_star[target], axis = 1)
+	clusters_prob = V_target
+	clusters = np.argmax(clusters_prob, axis = 1)
+	
 	#Xinwei edited
-	clusters_prob = V_star[target]
+	#clusters_prob = V_star[target]
 	if args.debug:
 		print("clusters_prob:")
 		print(clusters_prob)
@@ -950,11 +964,34 @@ if __name__ == "__main__":
 		#parametrs needed: V, miu, M, dict_list, dict_range_procoess,
 		algorithm(V, miu, M, dict_list, dict_range_processes)
 
+		'''
 		if(args.save_model_path != None):
 			f = gzip.open(args.save_model_path, 'wb')
+			#V_miu = [V, miu]
+			#pickle.dump(V_miu, f)
+			
+			V_star = get_V_star(V, miu)
+			V_target = V_star[target]
+			print('V_target is: {}'.format(V_target))
+			pickle.dump(V_target, f)
+			f.close()
+		'''
+
+		if(args.save_model_path != None):
+			# save model step. (i.e. generate .pklz file)
+			f = gzip.open(args.save_model_path + '.pklz', 'wb')
 			V_miu = [V, miu]
 			pickle.dump(V_miu, f)
-			f.close()
+
+
+			# output score file step. (i.e. generate .tsv file)
+			with open(args.save_model_path + '.tsv', 'w') as fout:
+				V_star = get_V_star(V, miu)
+				V_target = V_star[target]
+				for t in V_target:
+					fout.write('\t'.join([str(x) for x in t]) + '\n')
+					
+
 
 	else:
 		
