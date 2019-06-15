@@ -35,10 +35,12 @@ Please provide a config.py if running self-defined task.
 
 
 ### Input Data
-make a folder in MoCHIN with name: “input_" + $task
-inside the constructed folder, for each motif that are planned to use construct a indices-list-$motif.pklz file
+Make a folder in MoCHIN with name: “input_" + $task
 
-indices-list-$motif.pklz: a list of tuples that encodes motif instance in a predefined order where each node in a motif instance is represented by its pre-assigned index. For each motif encode by the tuple, each node with the same node type in a motif instance with node index permutatd inside a tuple representation are considered as differenc motif instances.
+Inside the constructed folder, for each motif that is going to be used, construct a indices-list-$motif.pklz file
+
+indices-list-$motif.pklz: a list of tuples that encodes motif instance in a predefined order, where each node in a motif instance is represented by its pre-assigned index. For each motif encode by the tuple, each node with the same node type in a motif instance with node index permutatd inside a tuple representation are considered as differenc motif instances.
+
 e.g.
 	(a1,p1,p2,a2), (a1,p2,p1,a2), (a2,p1,p2,a1) and (a2,p2,p1,a1) are considered as 4 different motif instances
 the list is stored in indices-list-$motif.pklz in a binary format using pickle and gzip
@@ -76,8 +78,10 @@ make a sub-folder "tran_test_split_*" where dblp-area-train-label.txt and dblp-a
 entity-dblp-subsample: subsample ...
 
 ### Eval Data
-the input file of --eval is a .tsv file (tab seperated values) where each line represents the distribution of weights of a target instance for each group, where each weight are seperated by '\t' 
+The input file of --eval is a .tsv file (tab seperated values) where each line represents the distribution of weights of a target instance for each cluster, where the weights are seperated by '\t' 
+
 Notice that:
+
 	1. the sum of weights in each line not necessarily sums to 1)
 	2. the order of target instance and groups are pre-specified in single-author-list.txt in Input Data
 	3. as reflected in single-author-list.txt the group weight distribution of training data should also be included in the .tsv file
