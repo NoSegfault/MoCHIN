@@ -29,7 +29,7 @@ e.g.
 
 	$ python3 MoCHIN.py --task DBLP_AREA --save_model model --debug
 	
-will run the task DBLP_AREA and save the model to model.pklz with debug-level output.
+
 
 Please provide a config.py if running self-defined task.
 
@@ -45,34 +45,40 @@ e.g.
 	(a1,p1,p2,a2), (a1,p2,p1,a2), (a2,p1,p2,a1) and (a2,p2,p1,a1) are considered as 4 different motif instances
 the list is stored in indices-list-$motif.pklz in a binary format using pickle and gzip
 
-1. label-14-area
+修改
+1. label-14-area      ->   label-area/group/yago 这样就可以用  label-$task 来代之
 
 
-label-area/group/yago
-
-
-2. train-test-split
-	yago-area-test-label.txt
-	dblp-area-train-label.txt
-
-area-train-lable
-$task
+2. area-train-lable      ->      $task-lable
 
 3. area-list ? single-author-list
 	yago: additonal list
+	这里先改成 $task-list 的形式吧
 
 
-node-type-number.txt: a dictionary with key representing node types in the input graph network and values representing number of a specific node type in the data
+node-type-number.pklz: a dictionary with key representing node types in the input graph network and values representing number of a specific node type in the data
 e.g.
 	{'P': 11138, 'V': 1564, 'A': 245, 'T': 6550}
 
-the list is stored in node-type-number.txt in a binary format using pickle
-
-single-author-list.txt 顺序一样. Make it more general ?
-
-make a sub-folder "tran_test_split_*" where dblp-area-train-label.txt and dblp-area-test-label.txt
+the list is stored in node-type-number.pklz in a binary format using pickle
 
 
+修改
+4.
+(这里， "tran_test_split_$task" 和 $task-train-label.txt and $task-test-label.txt 的命名都需要作相应的修改)
+
+
+make a sub-folder "tran_test_split_$task", where $task-train-label.txt and $task-test-label.txt stores the label for training date and testing data respectively in the following format :
+
+	Instance1	label1
+	Instance2	label2
+
+	...
+	
+	InstanceN	labelN
+
+
+改好之后之前没介绍的介绍下就好了
 ### Original Data
 
 entity-dblp-subsample: subsample ...
@@ -83,8 +89,8 @@ The input file of --eval is a .tsv file (tab seperated values) where each line r
 Notice that:
 
 	1. the sum of weights in each line not necessarily sums to 1)
-	2. the order of target instance and groups are pre-specified in single-author-list.txt in Input Data
-	3. as reflected in single-author-list.txt the group weight distribution of training data should also be included in the .tsv file
+	2. the order of target instance and groups are pre-specified in single-author-list.pklz in Input Data
+	3. as reflected in single-author-list.pklz the group weight distribution of training data should also be included in the .tsv file
 
 
 ### Saved Model

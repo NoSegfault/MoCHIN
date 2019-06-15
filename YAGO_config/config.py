@@ -7,7 +7,7 @@ N_clusters = 10
 input_prefix = 'input_yago/'
 seed_file = input_prefix + 'yago_label_country.txt'
 
-node_type_number = input_prefix + 'node-type-number.txt' 
+node_type_number = input_prefix + 'node-type-number.pklz' 
 target = 'P'
 target_list = input_prefix + 'person_l.txt'
 

@@ -8,9 +8,9 @@ N_clusters = 14
 input_prefix = 'input_area/'
 seed_file = input_prefix + 'label-14-area.txt'
 
-node_type_number = input_prefix + 'node-type-number.txt'
+node_type_number = input_prefix + 'node-type-number.pklz'
 target = 'A'
-target_list = input_prefix + 'single-author-list.txt'
+target_list = input_prefix + 'single-author-list.pklz'
 
 labelfile_train = input_prefix + 'train_test_split_area/dblp-area-train-label.txt'
 labelfile_test = input_prefix + 'train_test_split_area/dblp-area-test-label.txt'
