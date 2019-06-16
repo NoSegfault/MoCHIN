@@ -54,7 +54,7 @@ the list is stored in node-type-number.pklz in a binary format using pickle
 
 
 
-make a sub-folder "tran_test_split_$task", where $task-train-label.txt and $task-test-label.txt stores the label for training date and testing data respectively in the following format :
+make a sub-folder "tran_test_split_" + $task, where $task + "-train-label.txt" and $task + "-test-label.txt" stores the label for training date and testing data respectively in the following format :
 
 	Instance1	label1
 	Instance2	label2
