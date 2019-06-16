@@ -9,7 +9,7 @@ seed_file = input_prefix + 'label-yago.txt'
 
 node_type_number = input_prefix + 'node-type-number.pklz' 
 target = 'P'
-target_list = input_prefix + 'person-list.pklz'
+target_list = input_prefix + 'target-list.pklz'
 
 labelfile_train = input_prefix + 'train_test_split_yago/yago-train-label.txt'
 labelfile_test = input_prefix + 'train_test_split_yago/yago-test-label.txt'

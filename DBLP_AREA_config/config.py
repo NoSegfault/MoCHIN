@@ -10,7 +10,7 @@ seed_file = input_prefix + 'label-area.txt'
 
 node_type_number = input_prefix + 'node-type-number.pklz'
 target = 'A'
-target_list = input_prefix + 'author-list.pklz'
+target_list = input_prefix + 'target-list.pklz'
 
 labelfile_train = input_prefix + 'train_test_split_area/area-train-label.txt'
 labelfile_test = input_prefix + 'train_test_split_area/area-test-label.txt'
