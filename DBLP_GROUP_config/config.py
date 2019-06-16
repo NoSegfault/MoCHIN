@@ -9,7 +9,7 @@ seed_file = input_prefix + 'label-group.txt'
 
 node_type_number = input_prefix + 'node-type-number.pklz'
 target = 'A'
-target_list = input_prefix + 'single-author-list.pklz'
+target_list = input_prefix + 'author-list.pklz'
 
 labelfile_train = input_prefix + 'train_test_split_group/group-train-label.txt'
 labelfile_test = input_prefix + 'train_test_split_group/group-test-label.txt'
