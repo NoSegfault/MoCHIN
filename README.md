@@ -45,16 +45,6 @@ e.g.
 	(a1,p1,p2,a2), (a1,p2,p1,a2), (a2,p1,p2,a1) and (a2,p2,p1,a1) are considered as 4 different motif instances
 the list is stored in indices-list-$motif.pklz in a binary format using pickle and gzip
 
-修改
-1. label-14-area      ->   label-area/group/yago 这样就可以用  label-$task 来代之
-
-
-2. area-train-lable      ->      $task-lable
-
-3. area-list ? single-author-list
-	yago: additonal list
-	这里先改成 $task-list 的形式吧
-
 
 node-type-number.pklz: a dictionary with key representing node types in the input graph network and values representing number of a specific node type in the data
 e.g.
@@ -62,10 +52,6 @@ e.g.
 
 the list is stored in node-type-number.pklz in a binary format using pickle
 
-
-修改
-4.
-(这里， "tran_test_split_$task" 和 $task-train-label.txt and $task-test-label.txt 的命名都需要作相应的修改)
 
 
 make a sub-folder "tran_test_split_$task", where $task-train-label.txt and $task-test-label.txt stores the label for training date and testing data respectively in the following format :
@@ -78,10 +64,16 @@ make a sub-folder "tran_test_split_$task", where $task-train-label.txt and $task
 	InstanceN	labelN
 
 
-改好之后之前没介绍的介绍下就好了
+
 ### Original Data
 
 entity-dblp-subsample: subsample ...
+
+$NODETYPE-list.txt: a list of nodes of $NODETYPE(e.g.author)
+
+label-$TASK.txt: a combination of $TASK-train-label.txt and $TASK-test-label.txt
+
+
 
 ### Eval Data
 The input file of --eval is a .tsv file (tab seperated values) where each line represents the distribution of weights of a target instance for each cluster, where the weights are seperated by '\t' 
