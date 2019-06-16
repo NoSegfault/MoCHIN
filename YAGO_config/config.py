@@ -5,14 +5,14 @@ lambdas = [1, 10, .001]
 N_clusters = 10
 
 input_prefix = 'input_yago/'
-seed_file = input_prefix + 'yago_label_country.txt'
+seed_file = input_prefix + 'label-yago.txt'
 
 node_type_number = input_prefix + 'node-type-number.pklz' 
 target = 'P'
 target_list = input_prefix + 'person_l.txt'
 
-labelfile_train = input_prefix + 'train_test_yago/yago-area-train-label.txt'
-labelfile_test = input_prefix + 'train_test_yago/yago-area-test-label.txt'
+labelfile_train = input_prefix + 'train_test_split_yago/yago-train-label.txt'
+labelfile_test = input_prefix + 'train_test_split_yago/yago-test-label.txt'
 
 motif_weights = [.05] * 20
 

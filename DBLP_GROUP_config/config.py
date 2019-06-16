@@ -5,14 +5,14 @@ lambdas = [1, 10, .001]
 N_clusters = 5
 
 input_prefix = 'input_group/'
-seed_file = input_prefix + 'label-5-group.txt'
+seed_file = input_prefix + 'label-group.txt'
 
 node_type_number = input_prefix + 'node-type-number.pklz'
 target = 'A'
 target_list = input_prefix + 'single-author-list.pklz'
 
-labelfile_train = input_prefix + 'train_test_split_group/dblp-group-train-label.txt'
-labelfile_test = input_prefix + 'train_test_split_group/dblp-group-test-label.txt'
+labelfile_train = input_prefix + 'train_test_split_group/group-train-label.txt'
+labelfile_test = input_prefix + 'train_test_split_group/group-test-label.txt'
 
 motif_weights = [.25] * 4
 
