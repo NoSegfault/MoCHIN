@@ -69,9 +69,9 @@ make a sub-folder "tran_test_split_$task", where $task-train-label.txt and $task
 
 entity-dblp-subsample: subsample ...
 
-$NODETYPE-list.pklz: a pickle list of nodes of $NODETYPE(e.g.author)
+$nodetype-list.pklz: a pickle list of nodes of $nodetype(e.g.author)
 
-label-$TASK.txt: a combination of $TASK-train-label.txt and $TASK-test-label.txt
+label-$task.txt: a combination of $task-train-label.txt and $task-test-label.txt
 
 
 
