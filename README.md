@@ -3,7 +3,7 @@
 This repository provides code and data for the paper:<br>
 > User-Guided Clustering in Heterogeneous Information Networks via Motif-Based Comprehensive Transcription<br>
 > Yu Shi*, Xinwei He*, Naijing Zhang*, Carl Yang, and Jiawei Han.<br>
-> Submitted to ECMLPKDD 2019.<br>
+> In Proceedings of the 2019 European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases (ECMLPKDD), 2019.<br>
 
 Particularly, it includes 
 (1) an implementation of MoCHIN model, 
@@ -42,7 +42,7 @@ Inside the constructed folder, for each motif that is going to be used, construc
 indices-list-$motif.pklz: a list of tuples that encodes motif instance in a predefined order, where each node in a motif instance is represented by its pre-assigned index. For each motif encode by the tuple, each node with the same node type in a motif instance with node index permutatd inside a tuple representation are considered as differenc motif instances.
 
 e.g.
-	(a1,p1,p2,a2), (a1,p2,p1,a2), (a2,p1,p2,a1) and (a2,p2,p1,a1) are considered as 4 different motif instances
+	(a1, p1, p2, a2), (a1, p2, p1, a2), (a2, p1, p2, a1) and (a2, p2, p1, a1) are considered as 4 different motif instances
 the list is stored in indices-list-$motif.pklz in a binary format using pickle and gzip
 
 
